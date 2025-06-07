@@ -1,0 +1,10 @@
+App			Responsabilidade principal
+
+users			CommonUser, Staff, Analyst, Admin – autenticação e perfis
+companies		Empresas, planos, contratos
+missions		Missões abertas, participações, fila de avaliação
+feedbacks		Feedbacks, questionários, respostas
+tokens			Transações, carteira, saldo, saque, contratos token
+reports			Relatórios automatizados por analistas/admin
+web3integration	Conexão com smart contracts (mint, distribuição, verificação)
+plans           Planos disponiveis dentro da plataforma e cria vinculo com plano x empresa

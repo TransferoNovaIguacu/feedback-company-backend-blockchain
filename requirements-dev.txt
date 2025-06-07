@@ -1,0 +1,31 @@
+# Framework principal
+Django>=4.2,<5.0
+
+# REST API
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.2.2
+django-filter>=24.1
+
+# CORS e variáveis de ambiente
+django-cors-headers>=4.3.1
+python-decouple>=3.8
+PyJWT>=2.8.0
+
+# Blockchain/Web3
+web3>=6.10.0
+
+# Validação de CPF/CNPJ
+validate-docbr>=1.10.0
+
+# Testes
+pytest>=8.1.1
+pytest-django>=4.8.0
+coverage>=7.4.4
+
+# Django rest auth e django allauth
+pytest>=8.1.1
+django-allauth>=65.9.0
+dj-rest-auth>=7.0.1
+
+# Docs swagger & redoc
+drf-spectacular
