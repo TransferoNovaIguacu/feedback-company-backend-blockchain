@@ -6,17 +6,28 @@ from missions.models import Mission
 @receiver(post_save, sender=ContractedPlan)
 def generate_missions(sender, instance, created, **kwargs):
     if created:
-        # Lógica para gerar missões baseadas no plano contratado
-        for i in range(instance.remaining_feedbacks):
+        plan = instance.plan
+        company = instance.company
+        expiration_date = instance.expiration_date
+
+        # Gera missões do tipo Feedback
+        for i in range(plan.feedbacks_available):
             Mission.objects.create(
+                contracted_plan=instance,
                 mission_type='FEEDBACK',
-                contracted_plan=instance,
-                token_reward=instance.plan.token_value * instance.plan.reward_percentage,
+                title=f"Feedback {i+1} - {company.commercial_name}",
+                description="Avaliação de produto",
+                url=f"/feedback/{i+1}",
+                status='PENDING'
             )
-        
-        for i in range(instance.remaining_quests):
+
+        # Gera missões do tipo Quiz
+        for i in range(plan.quests_available):
             Mission.objects.create(
-                mission_type='QUIZ',
                 contracted_plan=instance,
-                token_reward=instance.plan.token_value * instance.plan.reward_percentage,
+                mission_type='QUIZ',
+                title=f"Quiz {i+1} - {company.commercial_name}",
+                description="Desafio de conhecimento sobre o produto",
+                url=f"/quiz/{i+1}",
+                status='PENDING'
             )

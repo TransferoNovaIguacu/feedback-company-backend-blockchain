@@ -1,17 +1,14 @@
 from django.db import models
-from django.contrib.auth import get_user_model
 from companies.models import Company
 from datetime import timedelta
 from django.utils import timezone
 
-User = get_user_model()
-
 class Plan(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique= True)
     description = models.TextField()
-    token_value = models.DecimalField(max_digits=20, decimal_places=2)
-    feedbacks_available = models.PositiveIntegerField()
-    quests_available = models.PositiveIntegerField()
+    token_value = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    feedbacks_available = models.PositiveIntegerField(default=0)
+    quests_available = models.PositiveIntegerField(default=0)
     reward_percentage = models.DecimalField(max_digits=3, decimal_places=2, default=0.6)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -19,13 +16,16 @@ class Plan(models.Model):
     def __str__(self):
         return self.name
 
-    class Meta:
-        ordering = ['-created_at']
-
-
 class ContractedPlan(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='contracted_plans')
-    plan = models.ForeignKey(Plan, on_delete=models.PROTECT)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        related_name='contracted_plans'
+    )
+    plan = models.ForeignKey(
+        Plan,
+        on_delete=models.PROTECT
+    )
     purchase_date = models.DateTimeField(auto_now_add=True)
     remaining_feedbacks = models.PositiveIntegerField()
     remaining_quests = models.PositiveIntegerField()
@@ -33,7 +33,7 @@ class ContractedPlan(models.Model):
     expiration_date = models.DateTimeField()
 
     def __str__(self):
-        return f"{self.company.name} - {self.plan.name}"
+        return f"{self.company.commercial_name} - {self.plan.name}"
 
     def save(self, *args, **kwargs):
         if not self.pk:

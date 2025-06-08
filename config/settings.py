@@ -69,7 +69,7 @@ INSTALLED_APPS = [
 
     # apps
     'users',
-    'plans',
+    'plans.apps.PlansConfig',
     'companies',
     'missions',
     'reports',
