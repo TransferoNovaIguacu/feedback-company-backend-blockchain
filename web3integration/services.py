@@ -10,20 +10,16 @@ logger = logging.getLogger(__name__)
 
 class Web3IntegrationService:
     def __init__(self):
-        # ✅ Usa HTTPProvider por padrão
         self.w3 = Web3(Web3.HTTPProvider(settings.WEB3_HTTP_PROVIDER_URL))
         logger.info("[Web3IntegrationService] Usando HTTPProvider")
 
-        # ✅ Valida conexão
         if not self.w3.is_connected():
             logger.error("❌ Falha ao conectar com o provider Ethereum")
             raise ConnectionError("Não foi possível conectar ao provider Ethereum")
-
-        # ✅ Inicializa conta do admin
+        
         self.account = self.w3.eth.account.from_key(settings.PRIVATE_KEY)
         self.admin_address = self.account.address
 
-        # ✅ Carrega contrato
         if hasattr(settings, 'CONTRACT_ADDRESS') and Web3.is_address(settings.CONTRACT_ADDRESS):
             if not self._load_contract():
                 logger.warning("⚠️ Contrato não carregado")
@@ -33,7 +29,6 @@ class Web3IntegrationService:
     def _load_contract(self):
         """Carrega o contrato Ethereum a partir do ABI"""
         try:
-            # ✅ Caminho absoluto para o ABI
             current_dir = Path(__file__).resolve().parent.parent
             contract_json_path = current_dir / 'blockchain/artifacts/contracts/FeedbackToken.sol/FeedbackToken.json'
 
@@ -58,11 +53,9 @@ class Web3IntegrationService:
     def batch_mint(self, recipients, amounts):
         """Minta tokens para múltiplos endereços"""
         try:
-            # ✅ Converte para checksum
             checksum_recipients = [Web3.to_checksum_address(addr) for addr in recipients]
             wei_amounts = [int(amt * 10**18) for amt in amounts]
 
-            # ✅ Constroi transação
             nonce = self.w3.eth.get_transaction_count(self.admin_address)
             latest_block = self.w3.eth.get_block('latest')
             base_fee = latest_block.get('baseFeePerGas')
