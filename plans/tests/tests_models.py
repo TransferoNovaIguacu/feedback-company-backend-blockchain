@@ -9,6 +9,7 @@ from django.utils import timezone
 User = get_user_model()
 
 class CompanyPlanCycleTest(TestCase):
+
     def setUp(self):
         
         self.company = Company.objects.create_user(
@@ -17,11 +18,10 @@ class CompanyPlanCycleTest(TestCase):
             commercial_name="Empresa Teste Ltda",
             legal_name="Empresa Teste Comércio e Serviços Ltda",
             business_area="Tecnologia",
-            cnpj="12345678000190",
+            cnpj="10129877000130",
             tokens_balance=Decimal('1000.00')
         )
         
-
         self.basic_plan = Plan.objects.create(
             name="Plano Básico",
             description="Plano inicial",
@@ -66,7 +66,6 @@ class CompanyPlanCycleTest(TestCase):
             plan=self.basic_plan
         )
         
-        # Verificar valores padrão
         self.assertEqual(contracted.remaining_feedbacks, 50)
         self.assertEqual(contracted.remaining_quests, 20)
         self.assertTrue(contracted.is_active)
@@ -76,7 +75,6 @@ class CompanyPlanCycleTest(TestCase):
             delta=1
         )
         
-        # Verificar relacionamentos
         self.assertEqual(contracted.company, self.company)
         self.assertEqual(contracted.plan, self.basic_plan)
 
@@ -91,6 +89,7 @@ class CompanyPlanCycleTest(TestCase):
         self.assertEqual(contracted.expiration_date, custom_date)
 
     def test_contracted_plan_with_inactive_plan(self):
+        
         with self.assertRaises(ValidationError):
             contracted = ContractedPlan(
                 company=self.company,
@@ -100,18 +99,15 @@ class CompanyPlanCycleTest(TestCase):
 
     def test_decrement_feedbacks_and_quests(self):
         
-        
         contracted = ContractedPlan.objects.create(
             company=self.company,
             plan=self.premium_plan
         )
         
-        # Decrementar feedbacks
         initial_feedbacks = contracted.remaining_feedbacks
         contracted.decrement_feedback()
         self.assertEqual(contracted.remaining_feedbacks, initial_feedbacks - 1)
         
-        # Decrementar quests
         initial_quests = contracted.remaining_quests
         contracted.decrement_quest()
         self.assertEqual(contracted.remaining_quests, initial_quests - 1)
@@ -150,12 +146,12 @@ class CompanyPlanCycleTest(TestCase):
         self.assertEqual(new_company.remaining_quests, 0)
 
     def test_print_contracted_plan_details(self):
+        
         contracted = ContractedPlan.objects.create(
             company=self.company,
             plan=self.premium_plan
         )
         
-        # Formatando os detalhes de forma mais legível
         details = f"""
         ============================================
         DETALHES DO PLANO CONTRATADO - TESTE
@@ -174,12 +170,10 @@ class CompanyPlanCycleTest(TestCase):
         ============================================
         """
         
-        # Verificações do teste
         self.assertIn(self.company.commercial_name, details)
         self.assertIn(str(self.premium_plan.name), details)
         self.assertIn(str(contracted.remaining_feedbacks), details)
         
-        # Imprimindo os detalhes formatados
         print("\n" + "="*80)
         print("SAÍDA DO TESTE: DETALHES DO PLANO CONTRATADO")
         print("="*80)

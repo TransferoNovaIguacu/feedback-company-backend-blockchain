@@ -5,4 +5,4 @@ class TokensConfig(AppConfig):
     name = 'tokens'
 
     def ready(self):
-        from . import signals  
+        import tokens.signals

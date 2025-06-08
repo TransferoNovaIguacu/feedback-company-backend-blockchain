@@ -46,7 +46,13 @@ class UserType(models.TextChoices):
 class User(AbstractBaseUser, PermissionsMixin):
     
     username = None
-    email = models.EmailField(_('email address'), unique=True)
+    email = models.EmailField(_('email address'), unique=True,
+            error_messages={
+            'unique': 'Este e-mail já está cadastrado.',
+            'invalid': 'Formato de e-mail inválido.',
+            'blank': 'O e-mail é obrigatório.',
+        })
+    
     user_type = models.CharField(
         max_length=20,
         choices=UserType.choices,
@@ -85,18 +91,22 @@ class CommonUser(User):
     full_name = models.CharField(max_length=255,help_text="Nome completo do usuário")
     total_tokens_earned = models.DecimalField(max_digits=20, decimal_places=2, default=0)
     completed_missions = models.IntegerField(default=0)
-    cpf = models.CharField(max_length=14, unique=True, help_text="CPF do usuário (somente números)")
+    cpf = models.CharField(
+        max_length=14, unique=True, help_text="CPF do usuário (somente números)",
+        error_messages={
+        'unique': 'CPF já está cadastrado.',
+        'blank': 'CPF é obrigatório.',
+        'invalid': 'CPF inválido.',
+    })
     
     def clean(self):
         super().clean()
-        cpf_validator = CPF()
-        if not cpf_validator.validate(self.cpf):
-            raise ValidationError({'cpf': 'CPF inválido'})
-    
-    def save(self, *args, **kwargs):
         if self.cpf:
             self.cpf = ''.join(filter(str.isdigit, self.cpf))
-        self.full_clean()
+            if not CPF().validate(self.cpf):
+                raise ValidationError({'cpf': 'CPF inválido'})
+    
+    def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
     
     def __str__(self):

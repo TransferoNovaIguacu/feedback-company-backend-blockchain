@@ -2,6 +2,8 @@ from django.db import models
 from users.models import User, UserType
 from companies.validators import validate_cnpj
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from validate_docbr import CNPJ
 
 class Company(User):
 
@@ -68,12 +70,15 @@ class Company(User):
         verbose_name_plural = "Companies"
         ordering = ['-created_at']
         
-    def save(self, *args, **kwargs):
-        self.user_type = UserType.COMPANY
-    
+    def clean(self):
+        super().clean()
         if self.cnpj:
             self.cnpj = ''.join(filter(str.isdigit, self.cnpj))
-
+            if not CNPJ().validate(self.cnpj):
+                raise ValidationError({'cnpj': 'CNPJ inválido'})
+        
+    def save(self, *args, **kwargs):
+        self.user_type = UserType.COMPANY
         self.full_clean()
         super().save(*args, **kwargs)
 

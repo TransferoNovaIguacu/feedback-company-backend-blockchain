@@ -11,7 +11,7 @@ User = get_user_model()
 class TokenWalletModelTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            email='testuser@example.com',  # Usando apenas email
+            email='testuser@example.com',
             password='testpass123'
         )
 
@@ -50,7 +50,7 @@ class TokenWalletViewTests(TestCase):
             email='viewuser@example.com',
             password='viewpass123'
         )
-        self.token_balance_url = reverse('token-balance')
+        self.token_balance_url = reverse('token_balance')
 
     def test_token_balance_unauthenticated(self):
         """Testa acesso não autenticado à view"""
@@ -68,6 +68,7 @@ class TokenWalletViewTests(TestCase):
         # Testa com saldo existente
         wallet = TokenWallet.objects.get(user=self.user)
         wallet.add_tokens(150)
+        wallet.refresh_from_db()
         
         response = self.client.get(self.token_balance_url)
         self.assertEqual(response.data['balance'], 150)

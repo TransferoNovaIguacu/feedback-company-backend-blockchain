@@ -10,16 +10,20 @@ logger = logging.getLogger(__name__)
 
 class Web3IntegrationService:
     def __init__(self):
+        # ✅ Usa HTTPProvider por padrão
         self.w3 = Web3(Web3.HTTPProvider(settings.WEB3_HTTP_PROVIDER_URL))
         logger.info("[Web3IntegrationService] Usando HTTPProvider")
 
+        # ✅ Valida conexão
         if not self.w3.is_connected():
             logger.error("❌ Falha ao conectar com o provider Ethereum")
             raise ConnectionError("Não foi possível conectar ao provider Ethereum")
-        
+
+        # ✅ Inicializa conta do admin
         self.account = self.w3.eth.account.from_key(settings.PRIVATE_KEY)
         self.admin_address = self.account.address
 
+        # ✅ Carrega contrato
         if hasattr(settings, 'CONTRACT_ADDRESS') and Web3.is_address(settings.CONTRACT_ADDRESS):
             if not self._load_contract():
                 logger.warning("⚠️ Contrato não carregado")
@@ -29,6 +33,7 @@ class Web3IntegrationService:
     def _load_contract(self):
         """Carrega o contrato Ethereum a partir do ABI"""
         try:
+            # ✅ Caminho absoluto para o ABI
             current_dir = Path(__file__).resolve().parent.parent
             contract_json_path = current_dir / 'blockchain/artifacts/contracts/FeedbackToken.sol/FeedbackToken.json'
 
@@ -53,9 +58,11 @@ class Web3IntegrationService:
     def batch_mint(self, recipients, amounts):
         """Minta tokens para múltiplos endereços"""
         try:
+            # ✅ Converte para checksum
             checksum_recipients = [Web3.to_checksum_address(addr) for addr in recipients]
             wei_amounts = [int(amt * 10**18) for amt in amounts]
 
+            # ✅ Constroi transação
             nonce = self.w3.eth.get_transaction_count(self.admin_address)
             latest_block = self.w3.eth.get_block('latest')
             base_fee = latest_block.get('baseFeePerGas')
@@ -98,3 +105,53 @@ class Web3IntegrationService:
         except Exception as e:
             logger.error(f"❌ Erro ao verificar saldo: {e}")
             return Decimal('0')
+        
+    def transfer(self, to_address, amount):
+        """Transfere tokens do contrato para o endereço especificado"""
+        try:
+            # Validação do endereço
+            if not Web3.is_address(to_address):
+                raise ValueError("Endereço de destino inválido")
+            
+            checksum_addr = Web3.to_checksum_address(to_address)
+            wei_amount = int(amount * 10**18)
+            
+            # Construção da transação (EIP-1559)
+            nonce = self.w3.eth.get_transaction_count(self.admin_address)
+            latest_block = self.w3.eth.get_block('latest')
+            base_fee = latest_block.get('baseFeePerGas')
+            
+            if base_fee is not None:
+                max_priority_fee = int(2e9)  # 2 Gwei
+                max_fee_per_gas = base_fee + max_priority_fee
+                tx_params = {
+                    'type': 2,
+                    'maxPriorityFeePerGas': max_priority_fee,
+                    'maxFeePerGas': max_fee_per_gas,
+                    'gas': 200000,
+                    'chainId': settings.CHAIN_ID,
+                    'nonce': nonce
+                }
+            else:
+                tx_params = {
+                    'gasPrice': self.w3.eth.gas_price,
+                    'gas': 200000,
+                    'chainId': settings.CHAIN_ID,
+                    'nonce': nonce
+                }
+            
+            # Assina e envia a transação
+            tx = self.contract.functions.transfer(
+                checksum_addr,
+                wei_amount
+            ).build_transaction(tx_params)
+            
+            signed_tx = self.w3.eth.account.sign_transaction(tx, settings.PRIVATE_KEY)
+            tx_hash = self.w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+            
+            logger.info(f"🔗 Transação de saque enviada: {tx_hash.hex()}")
+            return tx_hash.hex()
+        
+        except Exception as e:
+            logger.error(f"❌ Erro na transferência: {str(e)}")
+            return None

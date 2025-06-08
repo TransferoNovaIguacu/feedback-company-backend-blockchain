@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: Feedback Token Wallet API
+  version: 1.0.0
+  description: API para consulta e manipulação do saldo de tokens do usuário
+
+servers:
+  - url: /api/v1/fbtk
+
+paths:
+  /wallet/balance/:
+    get:
+      summary: Consulta saldo da carteira do usuário autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Saldo atual retornado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: integer
+                    example: 150
+        '401':
+          description: Não autenticado (token inválido ou ausente)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+
+  /wallet/add/:
+    post:
+      summary: Adiciona tokens à carteira do usuário autenticado
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Quantidade de tokens a adicionar
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1
+                  example: 50
+      responses:
+        '200':
+          description: Tokens adicionados com sucesso, saldo atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "50 tokens adicionados com sucesso."
+                  balance:
+                    type: integer
+                    example: 200
+        '400':
+          description: Requisição inválida ex - amount negativo ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+
+  /wallet/remove/:
+    post:
+      summary: Remove tokens da carteira do usuário autenticado
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Quantidade de tokens a remover
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1
+                  example: 30
+      responses:
+        '200':
+          description: Tokens removidos com sucesso, saldo atualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "30 tokens removidos com sucesso."
+                  balance:
+                    type: integer
+                    example: 170
+        '400':
+          description: Saldo insuficiente ou requisição inválida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Saldo insuficiente para remover tokens."
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error400:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Valor inválido."
+    Error401:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: "Credenciais de autenticação não foram fornecidas."
+          
+

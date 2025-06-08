@@ -1,9 +1,8 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from venv import logger
 from django.db import models
 from django.conf import settings
 from web3 import Web3
-
 from web3integration.services import Web3IntegrationService
 
 class TokenWallet(models.Model):
@@ -12,7 +11,7 @@ class TokenWallet(models.Model):
         on_delete=models.CASCADE,
         related_name='wallet'
     )
-    balance = models.DecimalField(max_digits=20, decimal_places=18, default=Decimal('0.0'))
+    balance = models.DecimalField(max_digits=36, decimal_places=18, default=Decimal('0.0'))
     last_sync = models.DateTimeField(auto_now=True)
 
     def sync_with_blockchain(self):
@@ -38,3 +37,31 @@ class TokenWallet(models.Model):
         else:
             logger.error("❌ Falha ao mintar tokens na blockchain")
             return None
+        
+    def __str__(self):
+        return f'{self.user.username} - {self.balance} tokens'
+
+    
+    def add_tokens(self, amount):
+        try:
+            amount = Decimal(amount)
+            self.balance += amount
+            self.save()
+        except (InvalidOperation, TypeError):
+            raise ValueError("Valor inválido para adicionar tokens.")
+
+    def remove_tokens(self, amount):
+        try:
+            amount = Decimal(amount)
+            if self.balance >= amount:
+                self.balance -= amount
+                self.save()
+                return True
+            return False
+        except (InvalidOperation, TypeError):
+            raise ValueError("Valor inválido para remover tokens.")
+
+
+    
+
+    
